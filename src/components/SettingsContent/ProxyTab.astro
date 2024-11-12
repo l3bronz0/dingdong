@@ -1,0 +1,104 @@
+---
+import Input from "@components/UI/Input.astro";
+import Dropdown from "@components/UI/Dropdown.astro";
+
+import { i18n } from "@i18n/utils";
+const t = i18n.inferLangUseTranslations(Astro.url);
+
+const getWSProtocol = () => {
+  if (Astro.url.protocol === "https:") {
+    return "wss://";
+  } else {
+    return "ws://";
+  }
+};
+
+const proxyList = [
+  { name: t("settings.proxy.auto"), value: "auto" },
+  { name: t("ultraviolet"), value: "ultraviolet" },
+  { name: "Rammerhead", value: "rammerhead" },
+];
+
+const searchEngineList = [
+  { name: "Google", value: "https://google.com/search?q=" },
+  { name: "DuckDuckGo", value: "https://duckduckgo.com/?q=" },
+  { name: "Bing", value: "https://bing.com/search?q=" },
+  { name: "Brave", value: "https://search.brave.com/search?q=" },
+  // Ecosia for some reason doesn't work with the proxy, hopefully I'll be able to add it eventually.
+  // { name: "Ecosia", value: "https://ecosia.org/search?q=" },
+  { name: "Searx", value: "https://searxng.site/?q=" },
+];
+
+const openPageWith = [
+  { name: t("settings.proxy.openPageWith.embed"), value: "embed" },
+  { name: "About:Blank", value: "about:blank" },
+  { name: t("settings.proxy.openPageWith.newTab"), value: "newTab" },
+];
+
+const transportsList = [
+  { name: "Epoxy", value: "/epoxy/index.mjs" },
+  { name: "Libcurl", value: "/libcurl/index.mjs" },
+  { name: "Bare", value: "/baremod/index.mjs" },
+];
+
+const wispURLList = [
+  { name: "Alu (US)", value: "wss://aluu.xyz/wisp/" },
+  { name: "Anura (US)", value: "wss://anura.pro/" },
+  { name: "Custom", value: getWSProtocol() + Astro.url.host + "/wisp/" },
+];
+---
+
+<div class="settings-container">
+  <div class="setting__selected-proxy">
+    <label aria-label="Selected Proxy" for="dropdown__selected-proxy" class="setting-label">{t("settings.proxy.selectedProxy")}</label>
+    <Dropdown buttonNameDefault="Ultraviolet" dropdownList={proxyList} localStorageKey="proxy" id="dropdown__selected-proxy" />
+  </div>
+  <div class="setting__search-engine">
+    <label aria-label="Search Engine" for="dropdown__search-engine" class="setting-label">{t("settings.proxy.searchEngine")}</label>
+    <Dropdown buttonNameDefault="Google" dropdownList={searchEngineList} localStorageKey="search" id="dropdown__search-engine" />
+  </div>
+  <div class="setting__open_with">
+    <label aria-label="Open Page With" for="dropdown__open-with" class="setting-label">{t("settings.proxy.openPageWith")}</label>
+    <Dropdown buttonNameDefault={t("settings.proxy.openPageWith.embed")} dropdownList={openPageWith} localStorageKey="openpage" id="dropdown__open-with" />
+  </div>
+  <div class="setting__wisp_url">
+    <label aria-label="Wisp URL" for="dropdown__wisp-url" for="dropdown__wisp-url" class="setting-label">{t("settings.proxy.wispURL")}</label>
+    <Dropdown buttonNameDefault={wispURLList[0].value} dropdownList={wispURLList} localStorageKey="wisp" id="dropdown__wisp-url" />
+  </div>
+  <div class="setting__bare_url">
+    <label aria-label="Bare Server URL" for="bare-url-input" class="setting-label">{t("settings.proxy.bareURL")}</label>
+    <Input height="50px" inputName="bare-url" />
+  </div>
+  <div class="setting__transport">
+    <label aria-label="Wisp Transport" for="dropdown__transport" class="setting-label">{t("settings.proxy.transport")}</label>
+    <Dropdown buttonNameDefault="Epoxy" dropdownList={transportsList} localStorageKey="transport" id="dropdown__transport" />
+  </div>
+  <div class="setting__reset">
+    <button id="reset-button">Reset Settings</button>
+  </div>
+</div>
+<div class="setting__wisp-url setting-hidden">
+  <label aria-label="Custom Wisp URL" for="wisp-url-input" class="setting-label">{t("settings.proxy.wispURL")}</label>
+  <Input height="50px" inputName="wisp-url" defaultTextContent={getWSProtocol() + Astro.url.host + "/wisp/"} />
+</div>
+<div class="setting__searxng-url setting-hidden">
+  <label aria-label="SearXNG URL" for="searxng-url-input" class="setting-label">{t("settings.proxy.searxngURL")}</label>
+  <Input height="50px" inputName="searxng-url" defaultTextContent="https://searxng.site/" />
+</div>
+
+<style>
+  .setting__reset {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  #reset-button {
+    background-color: var(--accent-color);
+    border: none;
+    color: var(--text-color);
+    border-radius: 1rem;
+    padding: 10px;
+    margin-top: 40px;
+    cursor: pointer;
+  }
+</style>

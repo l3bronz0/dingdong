@@ -1,0 +1,34 @@
+---
+const { inputName, defaultTextContent, height, placeholder, className, defaultStyles = true, autocomplete = "on" } = Astro.props;
+
+const styleList = className ? className.split(" ") : [];
+
+if (defaultStyles) {
+  styleList.push("astro-input");
+}
+
+interface Props {
+  inputName: string;
+  defaultTextContent?: string;
+  height?: string;
+  placeholder?: string;
+  className?: string;
+  defaultStyles?: boolean;
+  autocomplete?: string;
+}
+
+let inputHeight = height;
+if (!height) {
+  inputHeight = "3rem";
+}
+---
+
+<input
+  style={`height: ${inputHeight}; font-family: 'Varela Round', sans-serif !important;`}
+  id={inputName + "-input"}
+  placeholder={placeholder || ""}
+  value={defaultTextContent || ""}
+  type="text"
+  class={styleList.map((style) => style).join(" ")}
+  autocomplete={autocomplete}
+/>

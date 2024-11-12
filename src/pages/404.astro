@@ -1,0 +1,23 @@
+---
+import Layout from "src/layouts/Layout.astro";
+---
+
+<Layout title="404 | Alu">
+  <main id="main-content" class="main-content error-page">
+    <h1>404!</h1>
+    <p>The content you have requested could not be found!</p>
+  </main>
+</Layout>
+
+<style>
+  .error-page {
+    color: white;
+  }
+  #main-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 100%;
+  }
+</style>

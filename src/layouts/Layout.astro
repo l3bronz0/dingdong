@@ -1,0 +1,309 @@
+---
+import { ViewTransitions } from "astro:transitions";
+import Header from "@components/UI/Header.astro";
+import Footer from "@components/UI/Footer.astro";
+import ThemeLoader from "@components/ThemeLoader.astro";
+import CloakLoader from "@components/CloakLoader.astro";
+import WelcomeLogging from "@components/WelcomeLogging.astro";
+import SchemaData from "@components/SchemaData.astro";
+interface Props {
+  title: string;
+  optionalStylesheets?: string[];
+}
+
+const { title, optionalStylesheets } = Astro.props;
+
+const DESCRIPTION =
+  "Alu is a sleek web proxy supporting multiple standards of communication, and wide levels of customization. Similar to other proxies such as Holy Unblocker, Alu allows you to access blocked content while maintaining your privacy.";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <link href="/varela-round.css" rel="stylesheet" />
+    <ThemeLoader transition:persist />
+    <CloakLoader transition:persist />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="title" content="Alu" />
+    <meta name="author" content="Titanium Network" />
+    <meta name="description" content={DESCRIPTION} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://aluu.xyz" />
+    <meta property="og:title" content="Alu" />
+    <meta property="og:description" content={DESCRIPTION} />
+    <meta property="og:image" content="/favicon.svg" />
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://aluu.xyz" />
+    <meta property="twitter:title" content="Alu" />
+    <meta property="twitter:description" content={DESCRIPTION} />
+    <meta property="twitter:image" content="/favicon.svg" />
+    <link rel="canonical" href={Astro.url.href} />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <SchemaData />
+    {
+      optionalStylesheets?.map((item) => {
+        return <link rel="stylesheet" class="style-load" href={item} />;
+      })
+    }
+    <script src="https://www.googletagmanager.com/gtag/js?id=G-P1JX4G9KSF" defer is:inline></script>
+    <script is:inline defer>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        window.dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-P1JX4G9KSF");
+    </script>
+    <script>
+      import instantiateAlu from "@components/ts/Alu";
+      import IDBManager from "@components/ts/IDBManager";
+
+      instantiateAlu();
+
+      if (!window.idb) {
+        const db = IDBManager.loadIDB("AluDB", 1);
+        db.onupgradeneeded = () => {
+          window.idb = db.result;
+          IDBManager.SetIDB(window.idb);
+          IDBManager.CreateStore("InstalledExtensions", { keyPath: "slug" });
+        };
+        db.onsuccess = () => {
+          window.idb = db.result;
+          IDBManager.SetIDB(window.idb);
+        };
+      }
+    </script>
+    <script src="@components/ts/AluStore.ts"></script>
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <ViewTransitions />
+  </head>
+  <body>
+    <a href="#main-content" class="skip-to-main-content-link">Skip to main content</a>
+    <Header />
+    <slot transition:animate={"fade"} />
+    <script src="/uv/uv.bundle.js" is:inline transition:persist></script>
+    <script src="/uv.config.js" is:inline transition:persist></script>
+    <WelcomeLogging />
+    <Footer />
+    <style is:global>
+      :root {
+        --background-color: #191724;
+        --background-highlight: #1f1d2e;
+        --accent-color: #26233a;
+        --accent-color-brighter: #2e2b4a;
+        --text-color: #e0def4;
+        --text-color-accent: #c7c5e0;
+        --dropdown-background-color: #1f1d2e;
+      }
+      [data-theme="alu"] {
+        --background-color: #191724;
+        --background-highlight: #1f1d2e;
+        --accent-color: #26233a;
+        --accent-color-brighter: #2e2b4a;
+        --text-color: #e0def4;
+        --text-color-accent: #c7c5e0;
+        --dropdown-background-color: #1f1d2e;
+      }
+      [data-theme="mocha"] {
+        /* Catppucin Mocha theme */
+        --background-color: #1e1e2e;
+        --background-highlight: #45475a;
+        --accent-color: #32324e;
+        --accent-color-brighter: #242539;
+        --text-color: #cdd6f4;
+        --text-color-accent: #bac2de;
+        --dropdown-background-color: #181825;
+      }
+
+      [data-theme="macchiato"] {
+        /* Catppuccin Macchiato Theme */
+        --background-color: #24273a;
+        --background-highlight: #494d64;
+        --accent-color: #323550;
+        --accent-color-brighter: #2a2d42;
+        --text-color: #cad3f5;
+        --text-color-accent: #b8c0e0;
+        --dropdown-background-color: #1e2030;
+      }
+    </style>
+    <style is:global lang="scss">
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        --s: 50px; /* control the size*/
+        --darken: 30%;
+        --c1: color-mix(in srgb, var(--background-color), black var(--darken));
+        --c2: color-mix(in srgb, var(--accent-color), black var(--darken));
+        --c3: color-mix(in srgb, var(--dropdown-background-color), black var(--darken));
+
+        --_g: var(--c3) 0 120deg, #0000 0;
+        background: conic-gradient(from -60deg at 50% calc(100% / 3), var(--_g)), conic-gradient(from 120deg at 50% calc(200% / 3), var(--_g)),
+          conic-gradient(from 60deg at calc(200% / 3), var(--c3) 60deg, var(--c2) 0 120deg, #0000 0), conic-gradient(from 180deg at calc(100% / 3), var(--c1) 60deg, var(--_g)),
+          linear-gradient(90deg, var(--c1) calc(100% / 6), var(--c2) 0 50%, var(--c1) 0 calc(500% / 6), var(--c2) 0);
+        background-size: calc(1.732 * var(--s)) var(--s);
+      }
+
+      html[data-theme="macchiato"],
+      html[data-theme="mocha"] {
+        --c2: color-mix(in srgb, var(--dropdown-background-color), black var(--darken));
+        --c3: color-mix(in srgb, var(--accent-color-brighter), black var(--darken));
+      }
+
+      body {
+        /* background-color: var(--background-color); */
+        max-width: 100vw;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        font-family: "Varela Round", sans-serif !important;
+        color: var(--text-color);
+        opacity: 1;
+      }
+
+      // button, input {
+      //   font-family: "Varela Round", sans-serif;
+      // }
+
+      main {
+        width: 90%;
+        margin: 0 auto;
+      }
+
+      .skip-to-main-content-link {
+        position: absolute;
+        top: 10px;
+        left: 15px;
+        z-index: 1000;
+        padding: 0.75em;
+        padding-inline: 20px;
+        background-color: var(--background-highlight);
+        color: var(--text-color);
+        border-radius: 15px;
+        opacity: 0;
+        transition: opacity 250ms ease-in-out;
+        pointer-events: none;
+      }
+      .skip-to-main-content-link:focus {
+        top: 10px;
+        left: 15px;
+        opacity: 1;
+        outline: none;
+        pointer-events: all;
+      }
+      .title-text {
+        color: var(--text-color);
+        text-align: center;
+        font-weight: 400;
+        font-size: 2.5rem;
+        margin-bottom: 5px;
+      }
+      .title-desc {
+        color: var(--text-color);
+        text-align: center;
+      }
+      ::-webkit-scrollbar {
+        display: none;
+      }
+      #proxy-frame {
+        display: block;
+        position: absolute;
+        z-index: 1000;
+        width: 100vw;
+        height: 95vh;
+        top: 5vh;
+        left: 0;
+        border: none;
+        background-color: var(--background-color);
+        transition: opacity 250ms ease-in-out;
+        pointer-events: none;
+      }
+      #proxy-frame.active {
+        background-color: #fff;
+      }
+      #proxy-frame {
+        opacity: 0;
+      }
+      #top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 1rem;
+        height: 5vh;
+        background-color: var(--accent-color);
+        color: var(--text-color);
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        z-index: 1000;
+        transition: opacity 250ms ease-in-out;
+        pointer-events: none;
+        opacity: 0;
+        gap: 10px;
+      }
+      .top-bar-right,
+      .top-bar-left {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        height: 100%;
+      }
+      #proxied-favicon {
+        height: 32px;
+        width: 32px;
+      }
+      #close-button {
+        padding: 5px;
+        padding-inline: 40px;
+        border: none;
+        background-color: var(--background-highlight);
+        color: var(--text-color-accent);
+        border-radius: 15px;
+        cursor: pointer;
+      }
+
+      .nav-container {
+        margin-top: 5px;
+      }
+      @media (max-width: 484px) {
+        .nav-container {
+          display: none;
+        }
+      }
+
+      .nav-container > img {
+        cursor: pointer;
+        transition: 250ms ease-in-out;
+      }
+      .nav-container > img:hover {
+        filter: brightness(0.8);
+      }
+      #nav-share {
+        height: 30px;
+      }
+      .astro-input {
+        font-size: 16px;
+        width: 100%;
+        border: 2px solid var(--background-highlight);
+        border-radius: 10px;
+        background-color: var(--accent-color);
+        color: var(--text-color);
+        transition: 0.1s ease-in-out;
+      }
+      .astro-input::placeholder {
+        color: var(--text-color-accent);
+      }
+      .astro-input:focus {
+        outline: none;
+        border: 2px solid var(--text-color);
+      }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+# build output
+dist/
+.astro/
+node_modules/
+npm-debug.log*
+.env
+public/games/**

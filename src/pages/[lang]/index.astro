@@ -1,0 +1,249 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+import { STATIC_PATHS, i18n } from "@i18n/utils";
+import Link from "@components/UI/Link.astro";
+import ProxyRegistrar from "@components/ProxyRegistrar.astro";
+import Input from "@components/UI/Input.astro";
+import FaqCard from "@components/FaqCard.astro";
+
+const t = i18n.inferLangUseTranslations(Astro.url);
+
+export const prerender = true;
+
+export function getStaticPaths() {
+  return STATIC_PATHS;
+}
+---
+
+<Layout title={t("pages.home")}>
+  <main id="main-content">
+    <h1 class="title-text">{t("menu.welcome")}</h1>
+    <section id="proxy-input">
+      <div class="form-wrapper">
+        <form class="url-input-form" id="url-input-form">
+          <div id="loading-content">Loading Content...</div>
+          <Input className="url-input" inputName="url" placeholder={t("menu.search")} defaultStyles={false} autocomplete="off" />
+          <div id="search-suggestions"></div>
+        </form>
+
+        <div id="top-bar">
+          <div class="top-bar-left">
+            <img id="proxied-favicon" alt="favicon" />
+            <span id="url-text"></span>
+          </div>
+          <div class="top-bar-right">
+            <div class="nav-container">
+              <img width="32px" height="32px" id="nav-backwards" src="/img/nav/backwards.svg" alt="Backwards Arrow" />
+              <img width="32px" height="32px" id="nav-forwards" src="/img/nav/forwards.svg" alt="Forwards Arrow" />
+              <img width="32px" height="32px" id="nav-share" src="/img/nav/share.svg" alt="Share Page" />
+            </div>
+            <button id="close-button">Close</button>
+          </div>
+        </div>
+        <iframe title="proxy-iframe" id="proxy-frame"></iframe>
+      </div>
+    </section>
+    <section id="faq">
+      <h2 class="faq-title">{t("faq.title")}</h2>
+      <div class="faq-section">
+        <FaqCard>
+          <h2>{t("faq.whatIsAProxy")}</h2>
+          <p>{t("faq.whatIsAProxy.answer")}</p>
+        </FaqCard>
+        <FaqCard>
+          <h2>{t("faq.contributeToAlu")}</h2>
+          <p>
+            {t("faq.contributeToAlu.answer.segment1")}<Link href="https://www.patreon.com/wearr/membership" newTab>{t("faq.contributeToAlu.answer.patreonLinkText")}</Link>{
+              t("faq.contributeToAlu.answer.segment2")
+            }
+          </p>
+        </FaqCard>
+        <FaqCard large>
+          <h2>{t("faq.noBareClients")}</h2>
+          <p>{t("faq.noBareClients.answer")}</p>
+        </FaqCard>
+      </div>
+    </section>
+  </main>
+  <ProxyRegistrar />
+  <script>
+    import { initTransport, registerAndUpdateSW } from "@components/ts/TransportManager";
+    type Suggestion = {
+      phrase: string;
+    };
+    await registerAndUpdateSW();
+
+    async function sendAPIRequest(urlInput: HTMLInputElement, searchSuggestions: HTMLDivElement) {
+      if (!urlInput) throw new Error("urlInput is null");
+      if (!searchSuggestions) throw new Error("searchSuggestions is null");
+      const url = urlInput.value;
+      const request = await fetch("/search?query=" + url);
+      const data = await request.json();
+      searchSuggestions.innerHTML = "";
+      data.map((suggestion: Suggestion) => {
+        const suggestionElement = document.createElement("div");
+        suggestionElement.classList.add("search-suggestion");
+        suggestionElement.innerText = suggestion.phrase;
+        suggestionElement.addEventListener("click", async () => {
+          urlInput.value = suggestion.phrase;
+          if (window.loadFormContent) window.loadFormContent();
+        });
+        searchSuggestions.appendChild(suggestionElement);
+      });
+      if (data.length === 0) {
+        urlInput.classList.remove("search-results");
+        searchSuggestions.style.opacity = "0";
+      } else {
+        urlInput.classList.add("search-results");
+        searchSuggestions.style.opacity = "1";
+      }
+    }
+
+    function addEventListeners() {
+      const urlInput = document.getElementById("url-input") as HTMLInputElement;
+      const searchSuggestions = document.getElementById("search-suggestions") as HTMLDivElement;
+      // Silently return if the required elements aren't found, this prevents the console from getting cluttered with errors.
+      if (!urlInput || !searchSuggestions) return;
+      urlInput.addEventListener("focus", () => {
+        if (!searchSuggestions) {
+          throw new Error("searchSuggestions is null");
+        }
+        if (searchSuggestions.children.length > 0) {
+          searchSuggestions.style.opacity = "1";
+          searchSuggestions.style.pointerEvents = "all";
+          urlInput.classList.add("search-results");
+        }
+      });
+      urlInput.addEventListener("blur", () => {
+        searchSuggestions.style.opacity = "0";
+        setTimeout(() => {
+          searchSuggestions.style.pointerEvents = "none";
+        }, 200);
+        urlInput.classList.remove("search-results");
+      });
+
+      urlInput.addEventListener("keyup", async () => {
+        if (urlInput.value.length >= 3) {
+          return await sendAPIRequest(urlInput, searchSuggestions);
+        }
+      });
+    }
+    document.addEventListener("astro:after-swap", addEventListeners);
+    document.addEventListener("DOMContentLoaded", initTransport);
+    addEventListeners();
+  </script>
+</Layout>
+
+<style is:global>
+  #main-content {
+    margin-top: 50px;
+  }
+
+  .form-wrapper {
+    width: 40%;
+  }
+
+  @media (max-width: 1100px) {
+    .form-wrapper {
+      width: 80%;
+    }
+  }
+
+  #proxy-input {
+    display: flex;
+    justify-content: center;
+  }
+
+  .url-input-form {
+    border: none;
+    padding: 0;
+    margin-bottom: 15px;
+    width: 100%;
+  }
+
+  .url-input.search-results {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom: 0;
+  }
+
+  .url-input::placeholder {
+    color: var(--text-color-accent);
+  }
+
+  .url-input {
+    display: block;
+    background: transparent url(/img/search.svg) no-repeat 1rem center;
+    background-color: var(--dropdown-background-color);
+    color: var(--text-color);
+    border: 2px solid var(--text-color);
+    padding: 1rem;
+    border-radius: 10px;
+    width: 100%;
+    text-align: center;
+    transition: 0.25s ease-in-out;
+    outline: none;
+    font-size: 16px;
+    min-width: 250px;
+  }
+  form {
+    width: 30%;
+    height: 4rem;
+  }
+
+  #search-suggestions {
+    background-color: var(--accent-color-brighter);
+    z-index: 3;
+    position: relative;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 10px;
+    color: var(--text-color);
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    transition: 250ms ease-in-out;
+    opacity: 0;
+    overflow: hidden;
+    border: 3px solid var(--text-color);
+    box-shadow: 10px 10px 20px var(--dropdown-background-color);
+  }
+
+  .search-suggestion {
+    cursor: pointer;
+    padding-top: 5px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--text-color-accent);
+  }
+
+  .search-suggestion:last-child {
+    margin-bottom: 5px;
+    border-bottom: none;
+  }
+
+  #loading-content {
+    color: var(--text-color);
+    padding: 8px;
+    position: relative;
+    opacity: 0;
+    transition: 0.25s ease-in-out;
+    text-align: center;
+    font-size: 20px;
+  }
+  #faq {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .faq-title {
+    font-size: 1.75rem;
+  }
+
+  .faq-section {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+</style>

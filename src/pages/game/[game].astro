@@ -1,0 +1,102 @@
+---
+export const prerender = false;
+import Layout from "../../layouts/Layout.astro";
+import games from "../../json/games.json";
+
+import sitemap from "sitemap-ext:config";
+
+const gamesList = games as GameList;
+
+sitemap(async ({ setSitemap }) => {
+  const gamesList = games as GameList;
+  const urls = Object.keys(gamesList);
+  setSitemap(
+    urls.map((game) => ({
+      sitemap: true,
+      params: {
+        game: game,
+      },
+    }))
+  );
+});
+
+// get the current game based on the information in the url
+const game = Astro.params.game;
+if (!game) {
+  Astro.redirect("/en/games/");
+  return;
+}
+
+function isValidGameKey(key: string) {
+  return key in gamesList;
+}
+
+const gameData = isValidGameKey(game) ? gamesList[game] : null;
+
+if (!gameData) {
+  return Astro.redirect("/en/games/");
+}
+
+let classList: string = "";
+
+if (gameData.vertical) {
+  classList += "vertical ";
+}
+
+classList = classList.trim();
+---
+
+<Layout title=`${gameData.name} | Alu` optionalStylesheets={["/game.css"]}>
+  <div id="main-content">
+    <div class="game-container">
+      {
+        gameData.unity ? (
+          <iframe scrolling="no" src={`/game/unity/${gameData.slug}`} title={gameData.name} id="game-frame" class={classList} />
+        ) : gameData.flash ? (
+          <iframe scrolling="no" src={`/game/flash/${gameData.slug}`} title={gameData.name} id="game-frame" class={classList + " flash-frame"} />
+        ) : (
+          <iframe scrolling="no" src={`/games/${gameData.slug}`} title={gameData.name} id="game-frame" class={classList} />
+        )
+      }
+      <div class="game-info">
+        <div class="game-info-top">
+          <div class="game-info-left">
+            <img class="game-img" src={gameData.image} alt="" />
+            <p class="game-title">{gameData.name}</p>
+          </div>
+          <img src="/img/games/fullscreen.svg" alt="Fullscreen" id="game-fullscreen" class="icn" />
+        </div>
+        <div class="game-info-bottom">
+          <p class="game-desc">{gameData.description}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const iframe = document.getElementById("game-frame") as HTMLIFrameElement;
+  iframe.contentWindow?.focus();
+
+  iframe?.addEventListener("load", () => {
+    iframe.contentWindow?.focus();
+  });
+
+  iframe.addEventListener("click", () => {
+    iframe.contentWindow?.focus();
+  });
+
+  document.addEventListener("astro:after-swap", () => {
+    const iframe = document.getElementById("game-frame") as HTMLIFrameElement;
+    iframe?.contentWindow?.focus();
+  });
+
+  const fullscreen = document.getElementById("game-fullscreen") as HTMLImageElement;
+
+  fullscreen.addEventListener("click", () => {
+    if (iframe.requestFullscreen) {
+      iframe.requestFullscreen();
+      iframe.focus();
+    }
+  });
+</script>

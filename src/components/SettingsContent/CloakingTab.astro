@@ -1,0 +1,133 @@
+---
+import Input from "@components/UI/Input.astro";
+import { i18n } from "@i18n/utils";
+const t = i18n.inferLangUseTranslations(Astro.url);
+
+const presetCloaks = [
+  {
+    cloakTitle: "None",
+    favicon: "/favicon.svg",
+  },
+  {
+    cloakTitle: "Google",
+    favicon: "/icons/google.png",
+  },
+  {
+    cloakTitle: "Canvas",
+    favicon: "/icons/canvas.png",
+  },
+  {
+    cloakTitle: "Google Classroom",
+    favicon: "/icons/classroom.png",
+  },
+  {
+    cloakTitle: "Imagine Edgenuity",
+    favicon: "/icons/edgenuity.png",
+  },
+  {
+    cloakTitle: "Classlink",
+    favicon: "/icons/classlink.png",
+  },
+  {
+    cloakTitle: "Clever",
+    favicon: "/icons/clever.jpg",
+  },
+  {
+    cloakTitle: "Google Drive",
+    favicon: "/icons/drive.png",
+  },
+  {
+    cloakTitle: "Schoology",
+    favicon: "/icons/schoology.webp",
+  },
+  {
+    cloakTitle: "YouTube",
+    favicon: "/icons/youtube.png",
+  },
+];
+---
+
+<div class="settings-container">
+  <div class="cloak-container">
+    <div id="cloak-list">
+      {
+        presetCloaks.map((cloak: any) => {
+          return (
+            <div class="cloak-item" data-cloak-name={cloak.cloakTitle} data-cloak-icon={cloak.favicon}>
+              <img class="cloak-image" src={cloak.favicon} alt={cloak.cloakTitle} />
+            </div>
+          );
+        })
+      }
+    </div>
+    <div class="cloak-custom-override">
+      <Input inputName="cloak-custom-name" placeholder="Custom Name" height="30px" />
+      <Input inputName="cloak-custom-favicon" placeholder="Custom Favicon" height="30px" />
+      <button id="cloak-custom-button">{t("settings.cloaking.updateCloak")}</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .cloak-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #cloak-list {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  .cloak-item {
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    padding: 15px;
+    background-color: var(--dropdown-background-color);
+    border: 3px solid var(--accent-color);
+    cursor: pointer;
+    transition: 250ms ease-in-out;
+  }
+  .cloak-item.selected {
+    /* Make border color brighter */
+    border: 3px solid var(--accent-color-brighter);
+  }
+  .cloak-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
+  }
+
+  .cloak-custom-override {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 50%;
+  }
+  #cloak-custom-button {
+    margin-top: 6px;
+    height: 25px;
+    border-radius: 10px;
+    background-color: var(--accent-color-brighter);
+    border: 0;
+    color: var(--text-color);
+    cursor: pointer;
+    font-family: "Varela Round", sans-serif !important;
+  }
+  .cloak-custom-input {
+    height: 40px;
+    width: 100%;
+    border: 2px solid var(--accent-color-brighter);
+    border-radius: 10px;
+    background-color: #1b1b1b;
+    color: var(--text-color);
+    transition: 0.1s ease-in-out;
+  }
+  .cloak-custom-input:focus {
+    outline: none;
+    border: 2px solid var(--text-color);
+  }
+</style>

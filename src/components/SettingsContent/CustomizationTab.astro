@@ -1,0 +1,33 @@
+---
+import Dropdown from "@components/UI/Dropdown.astro";
+
+import { i18n } from "@i18n/utils";
+const t = i18n.inferLangUseTranslations(Astro.url);
+
+const themeList = [
+  { name: t("settings.customization.theme.Alu"), value: "alu" },
+  { name: t("settings.customization.theme.Macchiato"), value: "macchiato" },
+  { name: t("settings.customization.theme.Mocha"), value: "mocha" },
+];
+
+const languageList = [
+  { name: "English", value: "en" },
+  { name: "Español", value: "es" },
+  { name: "Français", value: "fr" },
+  { name: "日本語", value: "jp" },
+  { name: "Português", value: "pt" },
+  { name: "Русский", value: "ru" },
+  { name: "中文", value: "zh" },
+];
+---
+
+<div class="settings-container">
+  <div class="setting__theme">
+    <label for="dropdown__selected-theme" aria-label="Theme" class="setting-label">{t("settings.customization.theme")}</label>
+    <Dropdown buttonNameDefault="Alu" localStorageKey="theme" dropdownList={themeList} id="dropdown__selected-theme" />
+  </div>
+  <div class="setting__language">
+    <label for="dropdown__selected-language" aria-label="Language" class="setting-label">{t("settings.customization.language")}</label>
+    <Dropdown buttonNameDefault="English" localStorageKey="lang" dropdownList={languageList} id="dropdown__selected-language" />
+  </div>
+</div>

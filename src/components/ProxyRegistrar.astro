@@ -1,0 +1,229 @@
+<script>
+  import { TransportMgr, initTransport } from "./ts/TransportManager";
+  import "notyf/notyf.min.css";
+  import { Notyf } from "notyf";
+
+  const form = document.querySelector("form");
+  let input = document.querySelector("input")!;
+  document.addEventListener("astro:after-swap", initForm);
+  function initForm() {
+    const formEle = document.querySelector("form") as HTMLFormElement;
+    input = document.querySelector("input") as HTMLInputElement;
+    if (formEle) formEle.addEventListener("submit", formEventListener);
+  }
+  if (form) {
+    form.addEventListener("submit", formEventListener);
+  }
+
+  setInterval(() => {
+    const iframe = document.getElementById("proxy-frame") as HTMLIFrameElement;
+    if (iframe && iframe.src != "") {
+      updateProxiedFavicon(iframe);
+      updateTopbarTitle(iframe);
+    }
+  }, 500);
+
+  async function getProxyURL() {
+    const preference = Alu.store.get("proxy").value;
+    let url = input.value.trim();
+    if (!isUrl(url)) url = getSearchEngine() + url;
+    if (preference === "ultraviolet") {
+      return window.__uv$config.prefix + window.__uv$config.encodeUrl(url);
+    } else if (preference == "rammerhead") {
+      // Check if rammerhead-session exists in cookies
+      const rammerheadSession = getCookie("rammerhead-session");
+      if (!rammerheadSession) {
+        const session = await fetch("/newsession");
+        const sessionID = await session.text();
+        await fetch("/editsession?id=" + sessionID + "&enableShuffling=0");
+        // Now save it in a cookie that expires in 72 hours.
+        document.cookie = `rammerhead-session=${sessionID}; max-age=${60 * 60 * 72}; path=/`;
+      }
+      return `/${getCookie("rammerhead-session")}/${url}`;
+    } else {
+      // Default to UV
+      return window.__uv$config.prefix + window.__uv$config.encodeUrl(url);
+    }
+  }
+
+  function getUVProxyURL(frame: HTMLIFrameElement) {
+    return window.__uv$config.decodeUrl(frame.contentWindow!.location.href.split("/service/")[1]);
+  }
+
+  async function loadProxyContent(): Promise<void> {
+    const loadingContent = document.getElementById("loading-content") as HTMLElement;
+    if (loadingContent) loadingContent.style.opacity = "1";
+    await initTransport();
+    // The setTimeout is because service workers are a little silly and can take a while longer to register despite .then being called, which causes a bug on the first load.
+    setTimeout(async () => {
+      const openWith = Alu.store.get("openpage");
+      const proxy = Alu.store.get("proxy");
+      let url = input!.value.trim();
+      if (!isUrl(url)) url = getSearchEngine() + url;
+      else if (!(url.startsWith("https://") || url.startsWith("http://"))) url = "http://" + url;
+      if (openWith) {
+        if (openWith.value === "newTab" || proxy.value === "rammerhead") {
+          window.open(await getProxyURL(), "_blank");
+          return;
+        }
+        if (openWith.value === "about:blank") {
+          // Open about:blank window and inject iframe into it
+          const newWindow = window.open("about:blank", "_blank");
+          const newWindowDocument = newWindow!.document;
+          const iframe = newWindowDocument.createElement("iframe");
+          iframe.src = await getProxyURL();
+          // Inject css into the iframe
+          const css = newWindowDocument.createElement("link");
+          css.rel = "stylesheet";
+          css.href = "/iframe.css";
+          newWindowDocument.head.appendChild(css);
+          newWindowDocument.body.appendChild(iframe);
+          return;
+        }
+      }
+
+      const iframe = document.getElementById("proxy-frame") as HTMLIFrameElement;
+      const topbar = document.getElementById("top-bar") as HTMLDivElement;
+      const closeButton = document.getElementById("close-button") as HTMLButtonElement;
+      const backwardsButton = document.getElementById("nav-backwards") as HTMLImageElement;
+      const forwardsButton = document.getElementById("nav-forwards") as HTMLImageElement;
+      const shareButton = document.getElementById("nav-share") as HTMLImageElement;
+      const preference = Alu.store.get("proxy").value;
+      if (preference === "ultraviolet") {
+        iframe.src = window.__uv$config.prefix + window.__uv$config.encodeUrl(url);
+      } else if (preference == "rammerhead") {
+        // Check if rammerhead-session exists in cookies
+        const rammerheadSession = getCookie("rammerhead-session");
+        if (!rammerheadSession) {
+          const session = await fetch("/newsession");
+          const sessionID = await session.text();
+          // Disable URL shuffling on rewrite, eventually I'll try and figure out how it works, but for now, it's disabled.
+          await fetch("/editsession?id=" + sessionID + "&enableShuffling=0");
+          // Now save it in a cookie that expires in 72 hours.
+          document.cookie = `rammerhead-session=${sessionID}; max-age=${60 * 60 * 72}; path=/`;
+          // Now add an origin_proxy cookie for our domain
+          document.cookie = `origin_proxy=${window.location.origin}; max-age=${60 * 60 * 72}; path=/`;
+        }
+        if (iframe) iframe.src = `/${getCookie("rammerhead-session")}/${url}`;
+      } else {
+        // Default to UV
+        iframe.src = window.__uv$config.prefix + window.__uv$config.encodeUrl(url);
+      }
+      iframe.style.pointerEvents = "auto";
+      iframe.classList.add("proxy-frame");
+      document.body.appendChild(iframe);
+      setTimeout(() => {
+        iframeLoad();
+      }, 500);
+
+      function setActive() {
+        iframe.classList.add("active");
+      }
+
+      function iframeLoad() {
+        loadingContent.style.opacity = "0";
+        iframe.style.opacity = "1";
+        topbar.style.opacity = "1";
+        topbar.style.pointerEvents = "auto";
+        document.body.style.overflow = "hidden";
+        iframe.addEventListener("load", setActive);
+        closeButton.onclick = () => {
+          iframe.style.opacity = "0";
+          topbar.style.opacity = "0";
+          iframe.style.pointerEvents = "none";
+          topbar.style.pointerEvents = "none";
+          document.body.style.overflow = "auto";
+          iframe.classList.remove("active");
+          iframe.removeEventListener("load", setActive);
+
+          setTimeout(() => {
+            iframe.src = "about:blank";
+          }, 500);
+        };
+        forwardsButton.onclick = () => {
+          if (iframe.contentWindow) {
+            iframe.contentWindow.history.forward();
+          }
+        };
+        backwardsButton.onclick = () => {
+          if (iframe.contentWindow) {
+            iframe.contentWindow.history.back();
+          }
+        };
+        shareButton.onclick = () => {
+          const proxyFrame = document.getElementById("proxy-frame") as HTMLIFrameElement;
+          if (proxy.value === "rammerhead") {
+            navigator.clipboard.writeText(window.location.origin + "/" + getCookie("rammerhead-session") + "/" + input!.value.trim());
+          } else {
+            navigator.clipboard.writeText(getUVProxyURL(proxyFrame));
+          }
+          new Notyf({
+            duration: 2000,
+            position: { x: "right", y: "bottom" },
+            dismissible: true,
+            ripple: true,
+          }).success("Copied to clipboard!");
+        };
+      }
+    }, 100);
+  }
+
+  async function formEventListener(event: Event) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    await TransportMgr.updateTransport();
+    loadProxyContent();
+  }
+  window.loadFormContent = loadProxyContent;
+
+  function isUrl(val = "") {
+    if (/^http(s?):\/\//.test(val) || (val.includes(".") && val.substr(0, 1) !== " ")) return true;
+    return false;
+  }
+
+  function getCookie(name: string) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2 && parts) {
+      const lastPart = parts.pop();
+      if (lastPart) {
+        return lastPart.split(";").shift();
+      } else {
+        return null;
+      }
+    }
+  }
+
+  function getSearchEngine() {
+    return Alu.store.get("search").value;
+  }
+
+  function updateProxiedFavicon(iframe: HTMLIFrameElement) {
+    const proxiedFavicon = document.getElementById("proxied-favicon") as HTMLImageElement;
+    if (iframe) {
+      if (iframe.contentDocument) {
+        const favicon = (iframe.contentDocument.querySelector("link[rel='icon']") as HTMLLinkElement) || (iframe.contentDocument.querySelector("link[rel*='icon']") as HTMLLinkElement);
+        if (favicon && favicon.href.includes("data:image")) {
+          proxiedFavicon.src = favicon.href;
+          return;
+        }
+        const UVURL = getUVProxyURL(iframe);
+        if (proxiedFavicon.src == `${window.location.origin}/custom-favicon?url=${UVURL}`) return;
+        proxiedFavicon.src = `/custom-favicon?url=${UVURL}`;
+      }
+    }
+  }
+  function updateTopbarTitle(iframe: HTMLIFrameElement) {
+    if (!iframe.contentDocument) return;
+    const topbarTitle = document.getElementById("url-text") as HTMLElement;
+    if (iframe.contentDocument.title == "") {
+      topbarTitle.innerText = "Loading...";
+    } else {
+      if (iframe.contentDocument.title.length > 65) {
+        topbarTitle.innerText = iframe.contentDocument.title.slice(0, 65) + "...";
+        return;
+      }
+      topbarTitle.innerText = iframe.contentDocument.title;
+    }
+  }
+</script>
